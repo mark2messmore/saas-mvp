@@ -9,7 +9,9 @@ const app = express();
 // Allow CORS for your Vercel app
 app.use(
   cors({
-    origin: "https://saas-mvp-beta.vercel.app", // Replace with your Vercel domain
+    origin: "*", // Temporarily allow all origins for testing
+    methods: ['POST', 'GET', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Accept'],
   })
 );
 
@@ -21,15 +23,31 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 // Upload file to Google Cloud Storage
 async function uploadFileToGCS(file) {
+  if (!file.buffer || !file.originalname) {
+    throw new Error('Invalid file object');
+  }
+
   const bucket = storage.bucket(bucketName);
   const blob = bucket.file(file.originalname);
-  const blobStream = blob.createWriteStream();
+  const blobStream = blob.createWriteStream({
+    resumable: false,
+    metadata: {
+      contentType: file.mimetype
+    }
+  });
 
   return new Promise((resolve, reject) => {
-    blobStream.on("error", (err) => reject(err));
-    blobStream.on("finish", () =>
-      resolve(`https://storage.googleapis.com/${bucketName}/${file.originalname}`)
-    );
+    blobStream.on("error", (err) => {
+      console.error("Stream error:", err);
+      reject(err);
+    });
+    
+    blobStream.on("finish", () => {
+      const publicUrl = `https://storage.googleapis.com/${bucketName}/${file.originalname}`;
+      console.log("Upload finished:", publicUrl);
+      resolve(publicUrl);
+    });
+    
     blobStream.end(file.buffer);
   });
 }
@@ -37,18 +55,30 @@ async function uploadFileToGCS(file) {
 // File upload endpoint
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
+    console.log("Received upload request");
+    console.log("Headers:", req.headers);
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+
     if (!req.file) {
+      console.error("No file in request");
       return res.status(400).json({ error: "No file uploaded." });
     }
 
     const publicUrl = await uploadFileToGCS(req.file);
+    console.log("File uploaded successfully:", publicUrl);
+    
     res.status(200).json({
       message: "File uploaded successfully!",
       fileUrl: publicUrl,
+      fileName: req.file.originalname
     });
   } catch (error) {
-    console.error("Error uploading file:", error);
-    res.status(500).json({ error: "File upload failed." });
+    console.error("Error in upload handler:", error);
+    res.status(500).json({ 
+      error: "File upload failed.",
+      details: error.message 
+    });
   }
 });
 
