@@ -52,10 +52,5 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-// Listen on PORT
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
-
-module.exports = app;
+// Export the app as the entry point for Google Cloud Functions
+exports.uploadFile = app;
