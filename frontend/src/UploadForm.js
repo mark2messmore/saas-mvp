@@ -20,7 +20,7 @@ const UploadForm = () => {
     formData.append("file", file);
 
     try {
-      const response = await fetch("https://us-central1-localagency-5bf8d.cloudfunctions.net/uploadFile", {
+      const response = await fetch("https://us-central1-localagency-5bf8d.cloudfunctions.net/uploadFile/upload", {
         method: "POST",
         body: formData,
         headers: {
