@@ -9,7 +9,7 @@ const app = express();
 // Allow CORS for your Vercel app
 app.use(
   cors({
-    origin: "https://saas-gby0ejdxh-mark2messmores-projects.vercel.app", // Replace with your Vercel domain
+    origin: "https://saas-mvp-beta.vercel.app", // Replace with your Vercel domain
   })
 );
 
