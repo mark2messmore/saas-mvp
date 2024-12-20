@@ -1,0 +1,8 @@
+1|{
+2|  "scripts": {
+3|    "start": "set SET NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",
+4|    "build": "set SET NODE_OPTIONS=--openssl-legacy-provider && react-scripts build",
+5|    "test": "react-scripts test",
+6|    "eject": "react-scripts eject"
+7|  }
+8|} 

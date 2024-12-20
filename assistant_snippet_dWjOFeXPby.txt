@@ -1,0 +1,2 @@
+1|cd backend
+2|gcloud functions deploy uploadFile --runtime nodejs18 --trigger-http --allow-unauthenticated --region us-central1 

@@ -2,50 +2,57 @@ import React, { useState } from "react";
 
 const UploadForm = () => {
   const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Capture the selected file
   const handleFileChange = (e) => {
     setFile(e.target.files[0]);
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent the page from reloading
+    e.preventDefault();
     if (!file) {
-      alert("Please select a file.");
+      alert("Please select a file");
       return;
     }
 
+    setLoading(true);
     const formData = new FormData();
     formData.append("file", file);
 
     try {
       const response = await fetch("https://us-central1-localagency-5bf8d.cloudfunctions.net/uploadFile/upload", {
         method: "POST",
-        body: formData,
-        headers: {
-          'Accept': 'application/json',
-        }
+        body: formData
       });
 
+      const data = await response.json();
+      
       if (response.ok) {
-        const data = await response.json();
-        alert(`File uploaded successfully! File Name: ${data.fileName}`);
+        alert("Upload successful!");
       } else {
-        const errorText = await response.text();
-        console.error('Upload failed:', errorText);
-        alert("File upload failed.");
+        throw new Error(data.error || "Upload failed");
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
-      alert("An error occurred.");
+      console.error("Upload error:", error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
-      <input type="file" onChange={handleFileChange} />
-      <button type="submit">Upload</button>
+      <input 
+        type="file" 
+        onChange={handleFileChange}
+        disabled={loading}
+      />
+      <button 
+        type="submit"
+        disabled={loading || !file}
+      >
+        {loading ? "Uploading..." : "Upload"}
+      </button>
     </form>
   );
 };
