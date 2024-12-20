@@ -16,7 +16,10 @@ app.use(
 );
 
 // Initialize Google Cloud Storage
-const storage = new Storage();
+const storage = new Storage({
+  keyFilename: './config/localagency-5bf8d-f0898b458f12.json',
+  projectId: 'localagency-5bf8d'
+});
 const bucketName = "my-app-uploads-5bf8d"; // Replace with your bucket name
 
 const upload = multer({ storage: multer.memoryStorage() });
