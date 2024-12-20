@@ -6,16 +6,16 @@ require("dotenv").config();
 
 const app = express();
 
-// Allow requests only from your Vercel deployment
+// Allow CORS for your Vercel app
 app.use(
   cors({
-    origin: "https://saas-gby0ejdxh-mark2messmores-projects.vercel.app", // Replace this with your actual Vercel domain
+    origin: "https://saas-gby0ejdxh-mark2messmores-projects.vercel.app", // Replace with your Vercel domain
   })
 );
 
 // Initialize Google Cloud Storage
 const storage = new Storage();
-const bucketName = "my-app-uploads-5bf8d"; // Replace with your Google Cloud Storage bucket name
+const bucketName = "my-app-uploads-5bf8d"; // Replace with your bucket name
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -26,14 +26,10 @@ async function uploadFileToGCS(file) {
   const blobStream = blob.createWriteStream();
 
   return new Promise((resolve, reject) => {
-    blobStream.on("error", (err) => {
-      reject(err);
-    });
-
-    blobStream.on("finish", () => {
-      resolve(`https://storage.googleapis.com/${bucketName}/${file.originalname}`);
-    });
-
+    blobStream.on("error", (err) => reject(err));
+    blobStream.on("finish", () =>
+      resolve(`https://storage.googleapis.com/${bucketName}/${file.originalname}`)
+    );
     blobStream.end(file.buffer);
   });
 }
@@ -62,4 +58,4 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-module.exports = app; // This makes the `app` object the entry point
+module.exports = app;
