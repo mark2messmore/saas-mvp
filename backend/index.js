@@ -1,31 +1,41 @@
 const express = require("express");
 const multer = require("multer");
 const cors = require("cors");
-const { createClient } = require("@supabase/supabase-js");
+const { Storage } = require("@google-cloud/storage");
 require("dotenv").config();
 
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+const app = express();
+
+// Allow requests only from your Vercel deployment
+app.use(
+  cors({
+    origin: "https://saas-gby0ejdxh-mark2messmores-projects.vercel.app", // Replace this with your actual Vercel domain
+  })
 );
 
-const app = express();
-app.use(cors());
+// Initialize Google Cloud Storage
+const storage = new Storage();
+const bucketName = "my-app-uploads-5bf8d"; // Replace with your Google Cloud Storage bucket name
+
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Upload file to Supabase Storage
-async function uploadFile(file) {
-  const { data, error } = await supabase.storage
-    .from("uploads")
-    .upload(`public/${file.originalname}`, file.buffer, {
-      cacheControl: "3600",
-      upsert: false,
+// Upload file to Google Cloud Storage
+async function uploadFileToGCS(file) {
+  const bucket = storage.bucket(bucketName);
+  const blob = bucket.file(file.originalname);
+  const blobStream = blob.createWriteStream();
+
+  return new Promise((resolve, reject) => {
+    blobStream.on("error", (err) => {
+      reject(err);
     });
 
-  if (error) {
-    throw error;
-  }
-  return data;
+    blobStream.on("finish", () => {
+      resolve(`https://storage.googleapis.com/${bucketName}/${file.originalname}`);
+    });
+
+    blobStream.end(file.buffer);
+  });
 }
 
 // File upload endpoint
@@ -34,8 +44,12 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded." });
     }
-    const fileData = await uploadFile(req.file);
-    res.status(200).json({ message: "File uploaded successfully!", fileName: req.file.originalname });
+
+    const publicUrl = await uploadFileToGCS(req.file);
+    res.status(200).json({
+      message: "File uploaded successfully!",
+      fileUrl: publicUrl,
+    });
   } catch (error) {
     console.error("Error uploading file:", error);
     res.status(500).json({ error: "File upload failed." });

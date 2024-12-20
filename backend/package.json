@@ -11,6 +11,7 @@
   "type": "commonjs",
   "description": "",
   "dependencies": {
+    "@google-cloud/storage": "^7.14.0",
     "@supabase/supabase-js": "^2.47.10",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
