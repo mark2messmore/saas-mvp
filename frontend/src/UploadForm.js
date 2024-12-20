@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { storage } from "./firebase";
+import { ref, uploadBytes } from "firebase/storage";
 
 const UploadForm = () => {
   const [file, setFile] = useState(null);

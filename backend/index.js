@@ -1,15 +1,16 @@
 const express = require("express");
 const multer = require("multer");
+const cors = require("cors");
 const { createClient } = require("@supabase/supabase-js");
-require("dotenv").config(); // For environment variables
+require("dotenv").config();
 
-// Initialize Supabase client
 const supabase = createClient(
-  process.env.SUPABASE_URL, // Use environment variables
+  process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
 
 const app = express();
+app.use(cors());
 const upload = multer({ storage: multer.memoryStorage() });
 
 // Upload file to Supabase Storage
@@ -24,30 +25,27 @@ async function uploadFile(file) {
   if (error) {
     throw error;
   }
-
   return data;
 }
 
-// API endpoint to handle file uploads
+// File upload endpoint
 app.post("/upload", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded." });
     }
-
-    // Upload file to Supabase
     const fileData = await uploadFile(req.file);
-
-    res.status(200).json({
-      message: "File uploaded successfully!",
-      fileName: req.file.originalname,
-      filePath: fileData.path,
-    });
+    res.status(200).json({ message: "File uploaded successfully!", fileName: req.file.originalname });
   } catch (error) {
     console.error("Error uploading file:", error);
     res.status(500).json({ error: "File upload failed." });
   }
 });
 
-// Export the app for Google Cloud Functions
-exports.uploadFile = app; // This makes the app object the entry point for the function
+// Listen on PORT
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+
+module.exports = app;
